@@ -1,47 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SimpleConsole = void 0;
+exports.Console = void 0;
 var event_1 = require("./event");
-var SimpleConsole;
-(function (SimpleConsole) {
-    var Console = /** @class */ (function () {
-        function Console(process) {
-            this.process = process;
-        }
-        Console.prototype.emit = function () {
-            var process = this.process;
-            var args = [];
-            for (var i in process.argv) {
-                if (i === "0" || i === "1" || i === "2") {
-                    continue;
-                }
-                else {
-                    var value = process.argv[i];
-                    value = (value === "true") ? true : value;
-                    value = (value === "false") ? false : value;
-                    var int = parseFloat(value);
-                    value = (isNaN(int)) ? value : int;
-                    try {
-                        var obj = JSON.parse(value);
-                        value = (typeof obj === "object") ? obj : value;
-                    }
-                    catch (err) {
-                    }
-                    args.push(value);
-                }
+var Console = /** @class */ (function () {
+    function Console(process) {
+        this.process = process;
+    }
+    Console.prototype.emit = function () {
+        var process = this.process;
+        var args = [];
+        for (var i in process.argv) {
+            if (i === "0" || i === "1" || i === "2") {
+                continue;
             }
-            var values = {
-                cwd: process.cwd(),
-                args: args
-            };
-            event_1.ConsoleEvent.emit(process.argv[2], values);
+            else {
+                var value = process.argv[i];
+                value = (value === "true") ? true : value;
+                value = (value === "false") ? false : value;
+                var int = parseFloat(value);
+                value = (isNaN(int)) ? value : int;
+                try {
+                    var obj = JSON.parse(value);
+                    value = (typeof obj === "object") ? obj : value;
+                }
+                catch (err) {
+                }
+                args.push(value);
+            }
+        }
+        var values = {
+            cwd: process.cwd(),
+            args: args
         };
-        Console.prototype.on = function (keyword, callback, options) {
-            if (options === void 0) { options = undefined; }
-            event_1.ConsoleEvent.on(keyword, callback, options);
-        };
-        return Console;
-    }());
-    SimpleConsole.Console = Console;
-})(SimpleConsole = exports.SimpleConsole || (exports.SimpleConsole = {}));
+        event_1.ConsoleEvent.emit(process.argv[2], values);
+    };
+    Console.prototype.on = function (keyword, callback, options) {
+        if (options === void 0) { options = undefined; }
+        event_1.ConsoleEvent.on(keyword, callback, options);
+    };
+    return Console;
+}());
+exports.Console = Console;
 //# sourceMappingURL=index.js.map
