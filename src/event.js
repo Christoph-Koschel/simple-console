@@ -22,13 +22,13 @@ var ConsoleEvent;
         }
         for (var k = 0; k < values.args.length; k++) {
             for (var i = 0; i < eventList[command].length; i++) {
-                var event_1 = eventList[command][i];
-                var options = event_1.options;
+                var event = eventList[command][i];
+                var options = event.options;
                 if (options === undefined) {
-                    runCallback[i] = event_1.callback;
+                    runCallback[i] = event.callback;
                 }
                 else if (typeof values.args[k] === options.overload[k].type) {
-                    runCallback[i] = event_1.callback;
+                    runCallback[i] = event.callback;
                 }
                 else {
                     runCallback[i] = null;
