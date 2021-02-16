@@ -1,50 +1,10 @@
-export class Console {
-    private readonly process: NodeJS.Process;
+let eventList: any | any[] = {
+    commands: {},
+    global: {}
+};
 
-    public constructor(process: NodeJS.Process) {
-        this.process = process;
-    }
-
-    public emit() {
-        let process: NodeJS.Process = this.process;
-        let args: Array<string> = [];
-        for (let i in process.argv) {
-            if (i === "0" || i === "1" || i === "2") {
-                continue;
-            } else {
-                let value: any = process.argv[i];
-                value = (value === "true") ? true : value;
-                value = (value === "false") ? false : value;
-
-                let int = parseFloat(value);
-                value = (isNaN(int)) ? value : int;
-
-                try {
-                    let obj = JSON.parse(value);
-                    value = (typeof obj === "object") ? obj : value;
-                } catch (err) {
-                }
-
-                args.push(value);
-            }
-        }
-        const values: ConsoleEvent.EventValues = {
-            cwd: process.cwd(),
-            args: args
-        }
-
-        ConsoleEvent.emit(process.argv[2], values);
-    }
-
-    public on(keyword: string, callback: ConsoleEvent.EventCallback, options: ConsoleEvent.EventOptions | undefined = undefined) {
-        ConsoleEvent.on(keyword, callback, options);
-    }
-}
-
-namespace ConsoleEvent {
-    let eventList: any | any[] = {};
-
-    export function on(command: string, callback: EventCallback, options: EventOptions | undefined) {
+const eventObj: any = {
+    on: function on(command: string, callback: CommandCallback, options: CommandOptions | undefined) {
         // @ts-ignore
         if (eventList[command] === undefined) {
             eventList[command] = [];
@@ -53,11 +13,9 @@ namespace ConsoleEvent {
             callback: callback,
             options: options
         });
-
-    }
-
-    export function emit(command: string, values: EventValues) {
-        let runCallback: EventCallback[] | null[] = [];
+    },
+    emit: function emit(command: string, values: CommandArgs) {
+        let runCallback: CommandCallback[] | null[] = [];
         if (eventList[command] === undefined) {
             return;
         }
@@ -65,7 +23,7 @@ namespace ConsoleEvent {
             for (let i: number = 0; i < eventList[command].length; i++) {
 
                 let event: EventList = eventList[command][i];
-                let options: EventOptions = event.options;
+                let options: CommandOptions = event.options;
                 if (options === undefined) {
                     runCallback[i] = event.callback;
                 } else if (typeof values.args[k] === options.overload[k].type) {
@@ -83,26 +41,86 @@ namespace ConsoleEvent {
             }
         }
     }
+}
 
-    export interface EventValues {
-        args: any[];
-        cwd: string;
-    }
-
-    export interface EventCallback {
-        (values: EventValues): void;
-    }
-
-    export interface EventOptions {
-        overload: Overload[];
-    }
-
-    interface Overload {
-        type: "number" | "string" | "object" | "boolean";
-    }
-
-    interface EventList {
-        callback: EventCallback;
-        options: EventOptions;
+const callbackEvent: CallbackEvent  = {
+    on: function (command:string, callback: CommandCallback, options: CommandOptions | undefined = undefined) {
+        eventObj.on(command, callback, options);
     }
 }
+
+export const simpleConsole: SimpleConsole = {
+    on: (event: "ready", callback: Callback) => {
+        function emit() {
+            let args: Array<string> = [];
+            for (let i in process.argv) {
+                if (i === "0" || i === "1" || i === "2") {
+                    continue;
+                } else {
+                    let value: any = process.argv[i];
+                    value = (value === "true") ? true : value;
+                    value = (value === "false") ? false : value;
+
+                    let int = parseFloat(value);
+                    value = (isNaN(int)) ? value : int;
+
+                    try {
+                        let obj = JSON.parse(value);
+                        value = (typeof obj === "object") ? obj : value;
+                    } catch (err) {
+                    }
+
+                    args.push(value);
+                }
+            }
+            const values: CommandArgs = {
+                cwd: process.cwd(),
+                args: args
+            }
+
+            eventObj.emit(process.argv[2], values);
+        }
+
+        switch (event) {
+            case "ready":
+                callback(callbackEvent);
+                emit();
+                break;
+        }
+    }
+}
+
+interface SimpleConsole {
+    on(event: "ready", callback: Callback): void
+}
+
+interface CommandArgs {
+    args: any[];
+    cwd: string;
+}
+
+interface CommandCallback {
+    (options: CommandArgs): void;
+}
+
+interface CommandOptions {
+    overload: Overload[];
+}
+
+interface Overload {
+    type: "number" | "string" | "object" | "boolean";
+}
+
+interface EventList {
+    callback: CommandCallback;
+    options: CommandOptions;
+}
+
+interface Callback {
+    (event: CallbackEvent): void
+}
+
+interface CallbackEvent {
+    on(command: string, callback: CommandCallback, options?: CommandOptions | undefined): void;
+}
+
